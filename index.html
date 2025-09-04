@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XiverzCrasher</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000000;
+            color: #c9d1d9;
+        }
+        .gradient-btn {
+            background-image: linear-gradient(to right, #6366f1, #a855f7);
+            transition: all 0.3s ease;
+        }
+        .gradient-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 14px 0 rgba(105, 108, 255, 0.4);
+        }
+        .logout-btn {
+            background-color: transparent;
+            border: 1px solid #a855f7;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 5px 2px #ff33cc;
+        }
+        .logout-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px 4px #ff33cc;
+        }
+        .menu-btn {
+            transition: transform 0.3s ease;
+        }
+        .menu-btn:hover {
+            transform: scale(1.1);
+        }
+        .sidebar {
+            transition: transform 0.3s ease-in-out;
+            transform: translateX(-100%);
+        }
+        .sidebar.open {
+            transform: translateX(0);
+        }
+        .loading-overlay {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+        }
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #a855f7;
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .red-violet-lightning {
+            box-shadow: 0 0 8px 3px #ff33cc;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.75);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body class="bg-black text-gray-100 min-h-screen flex items-center justify-center p-4">
+
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="loader"></div>
+    </div>
+
+    <div id="app-container" class="w-full max-w-lg bg-gray-950 rounded-2xl shadow-2xl p-8 transform transition-all duration-500 scale-100">
+        
+        <div id="login-screen" class="space-y-6">
+            <div class="flex flex-col items-center space-y-4">
+                <img src="https://files.catbox.moe/snsae2.jpg" class="w-24 h-24 rounded-full border-2 border-fuchsia-500 red-violet-lightning shadow-lg" alt="Xiverz Logo">
+                <h1 class="text-4xl font-bold text-center text-indigo-400">XiverzCrasher</h1>
+            </div>
+            <p class="text-center text-gray-400">Welcome To XiverzCrasher Bug</p>
+            <div class="space-y-4">
+                <input type="text" id="username" placeholder="Username" class="w-full px-4 py-3 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-gray-400">
+                <input type="password" id="password" placeholder="Password" class="w-full px-4 py-3 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-gray-400">
+            </div>
+            <button id="login-btn" class="gradient-btn w-full py-3 rounded-lg font-bold text-lg text-white">Login</button>
+            <div id="login-message" class="text-center text-sm text-red-400"></div>
+        </div>
+        
+        <div id="main-screen" class="hidden flex flex-col h-full">
+            <header class="flex justify-between items-center pb-6">
+                <button id="menu-toggle-btn" class="menu-btn text-2xl p-2 rounded-full hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    ☰
+                </button>
+                <div class="flex flex-col items-center space-y-2">
+                    <img src="https://files.catbox.moe/snsae2.jpg" class="w-16 h-16 rounded-full border-2 border-fuchsia-500 red-violet-lightning shadow-lg" alt="Xiverz Logo">
+                    <h1 class="text-xl font-bold text-indigo-400">XiverzCrasher</h1>
+                </div>
+                <button id="logout-btn" class="logout-btn px-3 py-1.5 rounded-lg font-bold text-white shadow-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                </button>
+            </header>
+            
+            <div id="sidebar" class="sidebar fixed top-0 left-0 w-64 h-full bg-gray-950 z-50 shadow-lg p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-2xl font-bold text-indigo-400">Dashboard</h3>
+                    <button id="close-menu-btn" class="p-2 rounded-full hover:bg-gray-700 text-lg">✖</button>
+                </div>
+                <nav class="space-y-4">
+                    <button id="reseller-menu-btn" class="w-full text-left py-3 px-4 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors">Menu Reseller</button>
+                    <button id="owner-menu-btn" class="w-full text-left py-3 px-4 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors hidden">Menu Owner</button>
+                </nav>
+            </div>
+            
+            <div class="flex-grow flex flex-col items-center justify-center space-y-6">
+                <h3 class="text-xl font-semibold">Masukan Nomer Target</h3>
+                <input type="tel" id="whatsapp-number-input" placeholder="Masukkan nomor (misal: 62812...)" class="w-full px-4 py-3 bg-gray-800 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-gray-400">
+                <div class="flex flex-col space-y-4 w-full">
+                    <select id="option-select" class="bg-gray-800 red-violet-lightning text-white px-6 py-2 rounded-full font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500 w-full text-center">
+                        <option value="" disabled selected>Sellect Option Bugs</option>
+                        <option value="ForceXUi">ForceXUi</option>
+                        <option value="CrashiPhone">CrashiPhone</option>
+                        <option value="DelayCrash">DelayCrash</option>
+                    </select>
+                </div>
+                <button id="send-btn" class="bg-black text-white red-violet-lightning px-8 py-3 rounded-lg font-bold text-lg hover:bg-gray-800 transition-colors">Send</button>
+                <div id="status-message" class="text-center text-sm"></div>
+            </div>
+        </div>
+
+        <div id="reseller-modal" class="modal-overlay hidden fixed top-0 left-0 w-full h-full bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+            <div class="bg-gray-950 rounded-2xl shadow-2xl p-8 w-full max-w-md space-y-4">
+                <div class="flex justify-between items-center border-b border-gray-800 pb-4 mb-4">
+                    <h4 class="text-2xl font-bold text-indigo-400">Menu Reseller</h4>
+                    <button class="close-modal-btn p-2 rounded-full hover:bg-gray-700 text-lg">✖</button>
+                </div>
+                <button id="add-user-btn" class="gradient-btn w-full py-3 rounded-lg font-bold">Add Account</button>
+                <button id="delete-user-btn" class="logout-btn w-full py-3 rounded-lg font-bold">Delete Account</button>
+                <div id="reseller-form-container" class="space-y-4 mt-6"></div>
+            </div>
+        </div>
+
+        <div id="owner-modal" class="modal-overlay hidden fixed top-0 left-0 w-full h-full bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+            <div class="bg-gray-950 rounded-2xl shadow-2xl p-8 w-full max-w-md space-y-4">
+                <div class="flex justify-between items-center border-b border-gray-800 pb-4 mb-4">
+                    <h4 class="text-2xl font-bold text-indigo-400">Menu Owner</h4>
+                    <button class="close-modal-btn p-2 rounded-full hover:bg-gray-700 text-lg">✖</button>
+                </div>
+                <button id="add-reseller-btn" class="gradient-btn w-full py-3 rounded-lg font-bold">Add Reseller Account</button>
+                <button id="delete-reseller-btn" class="logout-btn w-full py-3 rounded-lg font-bold">Delete Reseller Account</button>
+                <div id="owner-form-container" class="space-y-4 mt-6"></div>
+            </div>
+        </div>
+        
+        <div id="send-status-modal" class="modal-overlay hidden">
+            <div class="bg-gray-950 rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center space-y-4">
+                <div id="status-spinner" class="loader mx-auto"></div>
+                <h4 id="status-title" class="text-xl font-bold text-indigo-400">Process Send Bug</h4>
+                <p id="status-timer" class="text-sm text-gray-400"></p>
+                <p id="status-body" class="text-md text-white font-semibold"></p>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables provided by the environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // UI elements
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loginScreen = document.getElementById('login-screen');
+        const mainScreen = document.getElementById('main-screen');
+        const loginBtn = document.getElementById('login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const loginMessage = document.getElementById('login-message');
+        const menuToggleBtn = document.getElementById('menu-toggle-btn');
+        const sidebar = document.getElementById('sidebar');
+        const closeMenuBtn = document.getElementById('close-menu-btn');
+        const resellerMenuBtn = document.getElementById('reseller-menu-btn');
+        const ownerMenuBtn = document.getElementById('owner-menu-btn');
+        const resellerModal = document.getElementById('reseller-modal');
+        const ownerModal = document.getElementById('owner-modal');
+        const closeModals = document.querySelectorAll('.close-modal-btn');
+        const resellerFormContainer = document.getElementById('reseller-form-container');
+        const ownerFormContainer = document.getElementById('owner-form-container');
+        const addUserBtn = document.getElementById('add-user-btn');
+        const deleteUserBtn = document.getElementById('delete-user-btn');
+        const addResellerBtn = document.getElementById('add-reseller-btn');
+        const deleteResellerBtn = document.getElementById('delete-reseller-btn');
+        const whatsappNumberInput = document.getElementById('whatsapp-number-input');
+        const sendBtn = document.getElementById('send-btn');
+        const statusMessage = document.getElementById('status-message');
+        const optionSelect = document.getElementById('option-select');
+        
+        // New elements for sending status modal
+        const sendStatusModal = document.getElementById('send-status-modal');
+        const statusSpinner = document.getElementById('status-spinner');
+        const statusTitle = document.getElementById('status-title');
+        const statusTimer = document.getElementById('status-timer');
+        const statusBody = document.getElementById('status-body');
+
+        // Firebase instances
+        let app, auth, db, userId, userRole;
+
+        // Initialize Firebase and Authentication
+        const initFirebase = async () => {
+            try {
+                loadingOverlay.classList.remove('hidden');
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                
+                userId = auth.currentUser.uid;
+                
+                // Set initial admin user in the database if it doesn't exist
+                const adminRef = doc(db, `artifacts/${appId}/users/${userId}/accounts`, 'admin');
+                const adminDoc = await getDoc(adminRef);
+                if (!adminDoc.exists()) {
+                    await setDoc(adminRef, {
+                        username: 'admin',
+                        password: 'admin123',
+                        role: 'owner'
+                    });
+                }
+                
+            } catch (error) {
+                console.error("Error initializing Firebase:", error);
+                loginMessage.textContent = "Error initializing app. Check console for details.";
+            } finally {
+                loadingOverlay.classList.add('hidden');
+            }
+        };
+
+        const checkLogin = async (username, password) => {
+            if (!db) {
+                loginMessage.textContent = "Aplikasi belum siap. Mohon coba lagi.";
+                return;
+            }
+
+            // Find user in the Firestore database
+            const accountsCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/accounts`);
+            const q = query(accountsCollectionRef, where("username", "==", username));
+            const accountsSnapshot = await getDocs(q);
+
+            let foundUser = null;
+
+            accountsSnapshot.forEach(doc => {
+                const userData = doc.data();
+                if (userData.password === password) {
+                    foundUser = userData;
+                }
+            });
+
+            if (foundUser) {
+                userRole = foundUser.role;
+                loginScreen.classList.add('hidden');
+                mainScreen.classList.remove('hidden');
+                updateUIForRole();
+            } else {
+                loginMessage.textContent = "Username atau password salah.";
+            }
+        };
+
+        const updateUIForRole = () => {
+            // Hide all admin/reseller specific buttons by default
+            resellerMenuBtn.classList.add('hidden');
+            ownerMenuBtn.classList.add('hidden');
+
+            if (userRole === 'owner') {
+                resellerMenuBtn.classList.remove('hidden');
+                ownerMenuBtn.classList.remove('hidden');
+            } else if (userRole === 'reseller') {
+                resellerMenuBtn.classList.remove('hidden');
+            }
+        };
+
+        const showForm = (container, formType, role = 'user') => {
+            container.innerHTML = `
+                <div class="space-y-4 p-4 bg-gray-800 rounded-lg">
+                    <h5 class="text-xl font-semibold">${formType === 'add' ? 'Tambah Akun Baru' : 'Hapus Akun'}</h5>
+                    ${formType === 'add' ? `
+                        <input type="text" id="new-username" placeholder="Username" class="w-full px-4 py-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-gray-400">
+                        <input type="password" id="new-password" placeholder="Password" class="w-full px-4 py-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-gray-400">
+                        <button id="submit-form-btn" class="gradient-btn w-full py-3 rounded-lg font-bold">Create</button>
+                    ` : `
+                        <p class="text-gray-400">Masukkan username akun yang ingin dihapus.</p>
+                        <input type="text" id="delete-username" placeholder="Username" class="w-full px-4 py-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-gray-400">
+                        <button id="submit-form-btn" class="logout-btn w-full py-3 rounded-lg font-bold">Delete</button>
+                    `}
+                    <div id="form-message" class="text-center text-sm mt-2"></div>
+                </div>
+            `;
+            const submitBtn = document.getElementById('submit-form-btn');
+            const formMessage = document.getElementById('form-message');
+
+            submitBtn.addEventListener('click', async () => {
+                const username = formType === 'add' ? document.getElementById('new-username').value : document.getElementById('delete-username').value;
+                if (!username) {
+                    formMessage.textContent = "Username tidak boleh kosong.";
+                    formMessage.className = "text-center text-sm text-red-400 mt-2";
+                    return;
+                }
+                
+                loadingOverlay.classList.remove('hidden');
+                try {
+                    const accountsRef = collection(db, `artifacts/${appId}/users/${userId}/accounts`);
+                    const q = query(accountsRef, where("username", "==", username));
+                    const querySnapshot = await getDocs(q);
+
+                    if (formType === 'add') {
+                        if (querySnapshot.empty) {
+                            const newPassword = document.getElementById('new-password').value;
+                            await setDoc(doc(accountsRef, username), {
+                                username: username,
+                                password: newPassword,
+                                role: role
+                            });
+                            formMessage.textContent = "Akun berhasil ditambahkan!";
+                            formMessage.className = "text-center text-sm text-green-400 mt-2";
+                        } else {
+                            formMessage.textContent = "Username sudah ada.";
+                            formMessage.className = "text-center text-sm text-red-400 mt-2";
+                        }
+                    } else { // 'delete'
+                        if (!querySnapshot.empty) {
+                            querySnapshot.forEach(async d => {
+                                await deleteDoc(doc(accountsRef, d.id));
+                            });
+                            formMessage.textContent = "Akun berhasil dihapus!";
+                            formMessage.className = "text-center text-sm text-green-400 mt-2";
+                        } else {
+                            formMessage.textContent = "Username tidak ditemukan.";
+                            formMessage.className = "text-center text-sm text-red-400 mt-2";
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error managing account:", error);
+                    formMessage.textContent = `Error: ${error.message}`;
+                    formMessage.className = "text-center text-sm text-red-400 mt-2";
+                } finally {
+                    loadingOverlay.classList.add('hidden');
+                }
+            });
+        };
+
+        // Event Listeners
+        loginBtn.addEventListener('click', () => {
+            const user = usernameInput.value;
+            const pass = passwordInput.value;
+            if (user && pass) {
+                checkLogin(user, pass);
+            } else {
+                loginMessage.textContent = "Username dan password tidak boleh kosong.";
+            }
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            loginScreen.classList.remove('hidden');
+            mainScreen.classList.add('hidden');
+            sidebar.classList.remove('open');
+            usernameInput.value = '';
+            passwordInput.value = '';
+            loginMessage.textContent = '';
+            statusMessage.textContent = '';
+        });
+
+        menuToggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+        });
+
+        closeMenuBtn.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+        });
+
+        resellerMenuBtn.addEventListener('click', () => {
+            if (userRole === 'reseller' || userRole === 'owner') {
+                resellerModal.classList.remove('hidden');
+                sidebar.classList.remove('open');
+                resellerFormContainer.innerHTML = '';
+            }
+        });
+
+        ownerMenuBtn.addEventListener('click', () => {
+            if (userRole === 'owner') {
+                ownerModal.classList.remove('hidden');
+                sidebar.classList.remove('open');
+                ownerFormContainer.innerHTML = '';
+            }
+        });
+
+        closeModals.forEach(btn => {
+            btn.addEventListener('click', () => {
+                resellerModal.classList.add('hidden');
+                ownerModal.classList.add('hidden');
+            });
+        });
+
+        addUserBtn.addEventListener('click', () => showForm(resellerFormContainer, 'add', 'user'));
+        deleteUserBtn.addEventListener('click', () => showForm(resellerFormContainer, 'delete', 'user'));
+        addResellerBtn.addEventListener('click', () => showForm(ownerFormContainer, 'add', 'reseller'));
+        deleteResellerBtn.addEventListener('click', () => showForm(ownerFormContainer, 'delete', 'reseller'));
+
+        sendBtn.addEventListener('click', () => {
+            const whatsappNumber = whatsappNumberInput.value;
+            const selectedOption = optionSelect.value;
+            if (!whatsappNumber || !selectedOption) {
+                statusMessage.textContent = "Gagal Mengirim Ke Bot: Nomor WhatsApp dan opsi harus diisi.";
+                statusMessage.className = "text-center text-sm text-red-400 mt-2";
+                return;
+            }
+
+            statusMessage.textContent = '';
+            sendStatusModal.classList.remove('hidden');
+            statusSpinner.classList.remove('hidden');
+            statusTitle.textContent = "Process Send Bug";
+            statusBody.textContent = '';
+            
+            let timeElapsed = 0;
+            const timerInterval = setInterval(() => {
+                timeElapsed++;
+                statusTimer.textContent = `Waktu: ${timeElapsed} detik`;
+            }, 1000);
+
+            // Simulate sending process
+            setTimeout(() => {
+                clearInterval(timerInterval);
+                statusSpinner.classList.add('hidden');
+                statusTitle.textContent = "Success!";
+                statusBody.textContent = `Succesfully Sending Bug To ${whatsappNumber}`;
+                statusTimer.textContent = ``;
+
+                // Hide modal after a short delay
+                setTimeout(() => {
+                    sendStatusModal.classList.add('hidden');
+                }, 2000); // Hide after 2 seconds
+            }, 3000); // Simulate 3 seconds of sending
+        });
+
+        initFirebase();
+    </script>
+
+</body>
+</html>
