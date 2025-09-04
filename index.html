@@ -88,7 +88,7 @@
 </head>
 <body class="bg-black text-gray-100 min-h-screen flex items-center justify-center p-4">
 
-    <div id="loadingOverlay" class="loading-overlay hidden">
+    <div id="loadingOverlay" class="loading-overlay">
         <div class="loader"></div>
     </div>
 
@@ -104,7 +104,7 @@
                 <input type="text" id="username" placeholder="Username" class="w-full px-4 py-3 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-gray-400">
                 <input type="password" id="password" placeholder="Password" class="w-full px-4 py-3 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-gray-400">
             </div>
-            <button id="login-btn" class="gradient-btn w-full py-3 rounded-lg font-bold text-lg text-white">Login</button>
+            <button id="login-btn" class="gradient-btn w-full py-3 rounded-lg font-bold text-lg text-white" disabled>Login</button>
             <div id="login-message" class="text-center text-sm text-red-400"></div>
         </div>
         
@@ -134,12 +134,13 @@
                 <nav class="space-y-4">
                     <button id="reseller-menu-btn" class="w-full text-left py-3 px-4 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors">Menu Reseller</button>
                     <button id="owner-menu-btn" class="w-full text-left py-3 px-4 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors hidden">Menu Owner</button>
+                    <div id="user-info-display" class="text-xs text-gray-500 mt-4 break-all"></div>
                 </nav>
             </div>
             
             <div class="flex-grow flex flex-col items-center justify-center space-y-6">
                 <h3 class="text-xl font-semibold">Masukan Nomer Target</h3>
-                <input type="tel" id="whatsapp-number-input" placeholder="Masukkan nomor (misal: 62812...)" class="w-full px-4 py-3 bg-gray-800 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-gray-400">
+                <input type="tel" id="whatsapp-number-input" placeholder="+628xxx" class="w-full px-4 py-3 bg-gray-800 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-gray-400">
                 <div class="flex flex-col space-y-4 w-full">
                     <select id="option-select" class="bg-gray-800 red-violet-lightning text-white px-6 py-2 rounded-full font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500 w-full text-center">
                         <option value="" disabled selected>Sellect Option Bugs</option>
@@ -153,7 +154,7 @@
             </div>
         </div>
 
-        <div id="reseller-modal" class="modal-overlay hidden fixed top-0 left-0 w-full h-full bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div id="reseller-modal" class="modal-overlay hidden">
             <div class="bg-gray-950 rounded-2xl shadow-2xl p-8 w-full max-w-md space-y-4">
                 <div class="flex justify-between items-center border-b border-gray-800 pb-4 mb-4">
                     <h4 class="text-2xl font-bold text-indigo-400">Menu Reseller</h4>
@@ -165,7 +166,7 @@
             </div>
         </div>
 
-        <div id="owner-modal" class="modal-overlay hidden fixed top-0 left-0 w-full h-full bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div id="owner-modal" class="modal-overlay hidden">
             <div class="bg-gray-950 rounded-2xl shadow-2xl p-8 w-full max-w-md space-y-4">
                 <div class="flex justify-between items-center border-b border-gray-800 pb-4 mb-4">
                     <h4 class="text-2xl font-bold text-indigo-400">Menu Owner</h4>
@@ -190,7 +191,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Global variables provided by the environment
@@ -225,6 +226,7 @@
         const sendBtn = document.getElementById('send-btn');
         const statusMessage = document.getElementById('status-message');
         const optionSelect = document.getElementById('option-select');
+        const userInfoDisplay = document.getElementById('user-info-display');
         
         // New elements for sending status modal
         const sendStatusModal = document.getElementById('send-status-modal');
@@ -234,26 +236,32 @@
         const statusBody = document.getElementById('status-body');
 
         // Firebase instances
-        let app, auth, db, userId, userRole;
+        let app, auth, db, userRole;
+        // Ganti path ke lokasi pribadi pengguna untuk menghindari masalah izin.
+        let usersCollectionPath;
 
         // Initialize Firebase and Authentication
         const initFirebase = async () => {
             try {
-                loadingOverlay.classList.remove('hidden');
                 app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
                 
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-                
-                userId = auth.currentUser.uid;
-                
-                // Set initial admin user in the database if it doesn't exist
-                const adminRef = doc(db, `artifacts/${appId}/users/${userId}/accounts`, 'admin');
+                // Pastikan otentikasi selesai sebelum operasi Firestore lainnya.
+                await new Promise(resolve => onAuthStateChanged(auth, user => {
+                    if (user) {
+                        userInfoDisplay.textContent = `User ID: ${user.uid}`;
+                        loginBtn.disabled = false;
+                        loadingOverlay.classList.add('hidden');
+                        usersCollectionPath = `artifacts/${appId}/users/${user.uid}/accounts`;
+                        resolve();
+                    } else {
+                        signInAnonymously(auth);
+                    }
+                }));
+
+                // Buat akun admin default jika belum ada.
+                const adminRef = doc(db, usersCollectionPath, 'admin');
                 const adminDoc = await getDoc(adminRef);
                 if (!adminDoc.exists()) {
                     await setDoc(adminRef, {
@@ -262,11 +270,10 @@
                         role: 'owner'
                     });
                 }
-                
+
             } catch (error) {
                 console.error("Error initializing Firebase:", error);
                 loginMessage.textContent = "Error initializing app. Check console for details.";
-            } finally {
                 loadingOverlay.classList.add('hidden');
             }
         };
@@ -277,32 +284,32 @@
                 return;
             }
 
-            // Find user in the Firestore database
-            const accountsCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/accounts`);
-            const q = query(accountsCollectionRef, where("username", "==", username));
-            const accountsSnapshot = await getDocs(q);
+            loadingOverlay.classList.remove('hidden');
 
-            let foundUser = null;
+            try {
+                const accountsCollectionRef = collection(db, usersCollectionPath);
+                // Karena kita tidak menggunakan orderBy, kita bisa langsung menggunakan where.
+                const q = query(accountsCollectionRef, where("username", "==", username), where("password", "==", password));
+                const accountsSnapshot = await getDocs(q);
 
-            accountsSnapshot.forEach(doc => {
-                const userData = doc.data();
-                if (userData.password === password) {
-                    foundUser = userData;
+                if (!accountsSnapshot.empty) {
+                    const userData = accountsSnapshot.docs[0].data();
+                    userRole = userData.role;
+                    loginScreen.classList.add('hidden');
+                    mainScreen.classList.remove('hidden');
+                    updateUIForRole();
+                } else {
+                    loginMessage.textContent = "Username atau password salah.";
                 }
-            });
-
-            if (foundUser) {
-                userRole = foundUser.role;
-                loginScreen.classList.add('hidden');
-                mainScreen.classList.remove('hidden');
-                updateUIForRole();
-            } else {
-                loginMessage.textContent = "Username atau password salah.";
+            } catch (error) {
+                console.error("Error checking login:", error);
+                loginMessage.textContent = "Terjadi kesalahan saat mencoba login.";
+            } finally {
+                loadingOverlay.classList.add('hidden');
             }
         };
 
         const updateUIForRole = () => {
-            // Hide all admin/reseller specific buttons by default
             resellerMenuBtn.classList.add('hidden');
             ownerMenuBtn.classList.add('hidden');
 
@@ -321,6 +328,11 @@
                     ${formType === 'add' ? `
                         <input type="text" id="new-username" placeholder="Username" class="w-full px-4 py-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-gray-400">
                         <input type="password" id="new-password" placeholder="Password" class="w-full px-4 py-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-gray-400">
+                        <select id="new-role" class="w-full px-4 py-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-gray-400">
+                            <option value="user">User</option>
+                            <option value="reseller">Reseller</option>
+                            <option value="owner">Owner</option>
+                        </select>
                         <button id="submit-form-btn" class="gradient-btn w-full py-3 rounded-lg font-bold">Create</button>
                     ` : `
                         <p class="text-gray-400">Masukkan username akun yang ingin dihapus.</p>
@@ -343,17 +355,18 @@
                 
                 loadingOverlay.classList.remove('hidden');
                 try {
-                    const accountsRef = collection(db, `artifacts/${appId}/users/${userId}/accounts`);
+                    const accountsRef = collection(db, usersCollectionPath);
                     const q = query(accountsRef, where("username", "==", username));
                     const querySnapshot = await getDocs(q);
 
                     if (formType === 'add') {
                         if (querySnapshot.empty) {
                             const newPassword = document.getElementById('new-password').value;
-                            await setDoc(doc(accountsRef, username), {
+                            const newRole = document.getElementById('new-role').value;
+                            await setDoc(doc(accountsRef, crypto.randomUUID()), {
                                 username: username,
                                 password: newPassword,
-                                role: role
+                                role: newRole
                             });
                             formMessage.textContent = "Akun berhasil ditambahkan!";
                             formMessage.className = "text-center text-sm text-green-400 mt-2";
@@ -402,6 +415,7 @@
             passwordInput.value = '';
             loginMessage.textContent = '';
             statusMessage.textContent = '';
+            userRole = null;
         });
 
         menuToggleBtn.addEventListener('click', () => {
@@ -476,8 +490,8 @@
             }, 3000); // Simulate 3 seconds of sending
         });
 
+        // Initialize Firebase
         initFirebase();
     </script>
-
 </body>
 </html>
