@@ -194,10 +194,12 @@
         import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // Global variables provided by the environment
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
+        // UI elements
         const loadingOverlay = document.getElementById('loadingOverlay');
         const loginScreen = document.getElementById('login-screen');
         const mainScreen = document.getElementById('main-screen');
@@ -226,21 +228,33 @@
         const optionSelect = document.getElementById('option-select');
         const userInfoDisplay = document.getElementById('user-info-display');
         
+        // New elements for sending status modal
         const sendStatusModal = document.getElementById('send-status-modal');
         const statusSpinner = document.getElementById('status-spinner');
         const statusTitle = document.getElementById('status-title');
         const statusTimer = document.getElementById('status-timer');
         const statusBody = document.getElementById('status-body');
 
+        // Firebase instances
         let app, auth, db, userRole;
+        // Ganti path ke lokasi pribadi pengguna untuk menghindari masalah izin.
         let usersCollectionPath;
 
+        // Initialize Firebase and Authentication
         const initFirebase = async () => {
             try {
+                // Check if Firebase config is available
+                if (Object.keys(firebaseConfig).length === 0) {
+                    loginMessage.textContent = "Error: Konfigurasi Firebase tidak ditemukan. Mohon periksa variabel lingkungan Anda saat deploy.";
+                    loadingOverlay.classList.add('hidden');
+                    return;
+                }
+                
                 app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
                 
+                // Pastikan otentikasi selesai sebelum operasi Firestore lainnya.
                 await new Promise(resolve => onAuthStateChanged(auth, user => {
                     if (user) {
                         userInfoDisplay.textContent = `User ID: ${user.uid}`;
@@ -253,6 +267,7 @@
                     }
                 }));
 
+                // Buat akun admin default jika belum ada.
                 const adminRef = doc(db, usersCollectionPath, 'admin');
                 const adminDoc = await getDoc(adminRef);
                 if (!adminDoc.exists()) {
@@ -265,7 +280,7 @@
 
             } catch (error) {
                 console.error("Error initializing Firebase:", error);
-                loginMessage.textContent = "Error initializing app. Check console for details.";
+                loginMessage.textContent = "Terjadi kesalahan saat memulai aplikasi. Periksa konsol untuk detail.";
                 loadingOverlay.classList.add('hidden');
             }
         };
@@ -387,7 +402,8 @@
                 }
             });
         };
-      
+
+        // Event Listeners
         loginBtn.addEventListener('click', () => {
             const user = usernameInput.value;
             const pass = passwordInput.value;
@@ -466,6 +482,7 @@
                 statusTimer.textContent = `Waktu: ${timeElapsed} detik`;
             }, 1000);
 
+            // Simulate sending process
             setTimeout(() => {
                 clearInterval(timerInterval);
                 statusSpinner.classList.add('hidden');
@@ -473,12 +490,14 @@
                 statusBody.textContent = `Succesfully Sending Bug To ${whatsappNumber}`;
                 statusTimer.textContent = ``;
 
+                // Hide modal after a short delay
                 setTimeout(() => {
                     sendStatusModal.classList.add('hidden');
                 }, 2000); // Hide after 2 seconds
             }, 3000); // Simulate 3 seconds of sending
         });
 
+        // Initialize Firebase
         initFirebase();
     </script>
 </body>
