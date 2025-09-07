@@ -1,0 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #000000;
+    color: #c9d1d9;
+}
+.gradient-btn {
+    background-image: linear-gradient(to right, #6366f1, #a855f7);
+    transition: all 0.3s ease;
+}
+.gradient-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px 0 rgba(105, 108, 255, 0.4);
+}
+.logout-btn {
+    background-color: transparent;
+    border: 1px solid #a855f7;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 5px 2px #ff33cc;
+}
+.logout-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 10px 4px #ff33cc;
+}
+.menu-btn {
+    transition: transform 0.3s ease;
+}
+.menu-btn:hover {
+    transform: scale(1.1);
+}
+.sidebar {
+    transition: transform 0.3s ease-in-out;
+    transform: translateX(-100%);
+}
+.sidebar.open {
+    transform: translateX(0);
+}
+.loading-overlay {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 100;
+}
+.loader {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #a855f7;
+    border-bottom-color: transparent;
+    border-radius: 50%;
+    display: inline-block;
+    box-sizing: border-box;
+    animation: rotation 1s linear infinite;
+}
+@keyframes rotation {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.red-violet-lightning {
+    box-shadow: 0 0 8px 3px #ff33cc;
+}
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
